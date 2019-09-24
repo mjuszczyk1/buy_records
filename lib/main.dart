@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
-import 'AlbumCard.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 void main() => runApp(MyApp());
@@ -227,11 +226,11 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text(widget.title),
           ),
           backgroundColor: appBackgroundColor,
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: <Widget>[
-                Form(
+          body: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                child: Form(
                   key: _formKey,
                   child: Column(
                     children: <Widget>[
@@ -266,13 +265,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                 ),
-                if (imageOpts.length > 0)
-                  AlbumOptions(
-                    albumOptions: imageOpts,
-                    onTap: saveRecord,
-                  ),
-              ],
-            ),
+              ),
+              if (imageOpts.length > 0)
+                AlbumOptions(
+                  albumOptions: imageOpts,
+                  onTap: saveRecord,
+                ),
+            ],
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: _performSearch,

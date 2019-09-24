@@ -18,7 +18,7 @@ class _AlbumOptionsState extends State<AlbumOptions> {
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView(
-        padding: const EdgeInsets.only(top: 16.0),
+        padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
         children: widget.albumOptions
             .map((Album album) => AlbumCard(
                   albumObj: album,

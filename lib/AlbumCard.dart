@@ -31,12 +31,17 @@ class _AlbumCardState extends State<AlbumCard> {
             child: Column(
               children: <Widget>[
                 Image.network(widget.albumObj.url),
-                Text.rich(TextSpan(
+                Text.rich(
+                  TextSpan(
                     text: widget.albumObj.title,
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.white)))
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                  textAlign: TextAlign.center,
+                )
               ],
             )));
   }
