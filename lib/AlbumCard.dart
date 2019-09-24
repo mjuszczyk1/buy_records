@@ -21,11 +21,6 @@ class _AlbumCardState extends State<AlbumCard> {
             child: Column(
               children: <Widget>[
                 Image.network(widget.albumObj.url),
-                // Text.rich(
-                //     TextSpan(text: widget.albumObj.artist, children: <TextSpan>[
-                //   if (widget.albumObj.album.length > 0)
-                //     TextSpan(text: " - ${widget.albumObj.album}")
-                // ])),
                 Text.rich(TextSpan(
                     text: widget.albumObj.title,
                     style: TextStyle(

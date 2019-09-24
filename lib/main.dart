@@ -3,7 +3,6 @@ import 'package:buy_records/secrets/Secret.dart';
 import 'package:buy_records/secrets/SecretLoader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:buy_records/AlbumOptions.dart';
-import 'package:buy_records/extends/EnterExitRoute.dart';
 import 'package:buy_records/types/Album.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
