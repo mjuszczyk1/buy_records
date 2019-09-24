@@ -19,9 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Buy Records! Nerd.',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
+      theme: ThemeData(primarySwatch: Colors.green),
       home: MyHomePage(title: 'Buy Records! Nerd.'),
     );
   }
@@ -42,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final albumController = TextEditingController();
   final appBackgroundColor = Color.fromRGBO(25, 20, 20, 1);
   String apiKey = '';
+  final pageController = PageController(initialPage: 0, keepPage: false);
 
   // Shit that's actually maniuplated for display
   List<Album> imageOpts = <Album>[];
@@ -153,27 +152,6 @@ class _MyHomePageState extends State<MyHomePage> {
         () => {fileContents = json.decode(jsonFile.readAsStringSync())});
   }
 
-  void _pushSaved() {
-    Navigator.of(context).push(EnterExitRoute(
-      exitPage: MyApp(),
-      enterPage: Scaffold(
-        backgroundColor: appBackgroundColor,
-        appBar: new AppBar(
-          title: const Text('Saved Records'),
-        ),
-        body: new ListView(
-          padding: const EdgeInsets.all(16),
-          children: savedRecords
-              .map((album) => AlbumCard(
-                    albumObj: album,
-                    onTapAction: removeRecord,
-                  ))
-              .toList(),
-        ),
-      ),
-    ));
-  }
-
   void removeRecord(Album album) {
     if (!fileExists) {
       return;
@@ -194,8 +172,6 @@ class _MyHomePageState extends State<MyHomePage> {
         gravity: ToastGravity.CENTER,
         backgroundColor: Colors.green,
         textColor: Colors.white);
-
-    Navigator.of(context).pop();
   }
 
   void saveRecord(Album album) {
@@ -215,98 +191,105 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
+  void _performSearch() async {
+    if (artistController.text.length == 0) {
+      return;
+    }
+    String baseUrl = "https://api.discogs.com";
+    String query =
+        Uri.encodeFull("${artistController.text} - ${albumController.text}");
+    String url = "$baseUrl/database/search?type=release&q=$query&token=$apiKey";
+    final response = await http.get(url, headers: {"Accept": "text/plain"});
+    var list = json.decode(response.body);
+
+    List<Album> newImageOpts = <Album>[];
+    var i = 0;
+    while (i < 10 || i > list["results"].length - 1) {
+      newImageOpts.add(Album(list["results"][i]["thumb"], artistController.text,
+          albumController.text, list["results"][i]["title"]));
+      i++;
+    }
+
+    setState(() {
+      imageOpts = newImageOpts;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    print('YO');
-    print(apiKey);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.list),
-            onPressed: _pushSaved,
-          )
-        ],
-      ),
-      backgroundColor: appBackgroundColor,
-      body: Center(
-        child: Column(
-          children: <Widget>[
-            Form(
-              key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: <Widget>[
-                          TextFormField(
-                            cursorColor: Colors.green,
-                            style: TextStyle(color: Colors.white),
-                            controller: artistController,
-                            decoration: InputDecoration(
-                                hintText: 'Artist Name',
-                                hintStyle: TextStyle(color: Colors.grey)),
-                            validator: (text) {
-                              if (text.isEmpty) {
-                                return 'Please enter artist name';
-                              }
-                              return null;
-                            },
-                          ),
-                          TextFormField(
-                            cursorColor: Colors.green,
-                            style: TextStyle(color: Colors.white),
-                            controller: albumController,
-                            decoration: InputDecoration(
-                                hintText: 'Album Name',
-                                hintStyle: TextStyle(color: Colors.grey)),
-                          ),
-                        ],
-                      )),
-                ],
+    return PageView(
+      controller: pageController,
+      children: <Widget>[
+        Scaffold(
+          appBar: AppBar(
+            title: Text(widget.title),
+          ),
+          backgroundColor: appBackgroundColor,
+          body: Column(
+            children: <Widget>[
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: <Widget>[
+                            TextFormField(
+                              cursorColor: Colors.green,
+                              style: TextStyle(color: Colors.white),
+                              controller: artistController,
+                              decoration: InputDecoration(
+                                  hintText: 'Artist Name',
+                                  hintStyle: TextStyle(color: Colors.grey)),
+                              validator: (text) {
+                                if (text.isEmpty) {
+                                  return 'Please enter artist name';
+                                }
+                                return null;
+                              },
+                            ),
+                            TextFormField(
+                              cursorColor: Colors.green,
+                              style: TextStyle(color: Colors.white),
+                              controller: albumController,
+                              decoration: InputDecoration(
+                                  hintText: 'Album Name',
+                                  hintStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ],
+                        )),
+                  ],
+                ),
               ),
-            ),
-            if (imageOpts.length > 0)
-              Expanded(
-                  child: AlbumOptions(
-                      albumOptions: imageOpts, onTapAction: saveRecord))
-          ],
+              if (imageOpts.length > 0)
+                Expanded(
+                    child: AlbumOptions(
+                        albumOptions: imageOpts, onTapAction: saveRecord))
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _performSearch,
+            tooltip: 'Search for albums',
+            child: Icon(Icons.add),
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          if (artistController.text.length == 0) {
-            return;
-          }
-          String baseUrl = "https://api.discogs.com";
-          String query = Uri.encodeFull(
-              "${artistController.text} - ${albumController.text}");
-          String url =
-              "$baseUrl/database/search?type=release&q=$query&token=$apiKey";
-          final response =
-              await http.get(url, headers: {"Accept": "text/plain"});
-          var list = json.decode(response.body);
-
-          List<Album> newImageOpts = <Album>[];
-          var i = 0;
-          while (i < 10 || i > list["results"].length - 1) {
-            newImageOpts.add(Album(
-                list["results"][i]["thumb"],
-                artistController.text,
-                albumController.text,
-                list["results"][i]["title"]));
-            i++;
-          }
-
-          setState(() {
-            imageOpts = newImageOpts;
-          });
-        },
-        tooltip: 'Search for albums',
-        child: Icon(Icons.add),
-      ),
+        Scaffold(
+          appBar: AppBar(
+            title: Text('Saved Records'),
+          ),
+          backgroundColor: appBackgroundColor,
+          body: new ListView(
+            padding: const EdgeInsets.all(16),
+            children: savedRecords
+                .map((album) => AlbumCard(
+                      albumObj: album,
+                      onTapAction: removeRecord,
+                    ))
+                .toList(),
+          ),
+        ),
+      ],
     );
   }
 }
