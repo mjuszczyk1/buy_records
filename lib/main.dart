@@ -271,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
           floatingActionButton: FloatingActionButton(
             onPressed: _performSearch,
             tooltip: 'Search for albums',
-            child: Icon(Icons.add),
+            child: Icon(Icons.search),
           ),
         ),
         Scaffold(
