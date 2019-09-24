@@ -227,54 +227,52 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text(widget.title),
           ),
           backgroundColor: appBackgroundColor,
-          body: Column(
-            children: <Widget>[
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: <Widget>[
-                            TextFormField(
-                              cursorColor: Colors.green,
-                              style: TextStyle(color: Colors.white),
-                              controller: artistController,
-                              textInputAction: TextInputAction.next,
-                              onFieldSubmitted: (v) {
-                                FocusScope.of(context)
-                                    .requestFocus(albumFieldFocusNode);
-                              },
-                              decoration: InputDecoration(
-                                  hintText: 'Artist Name',
-                                  hintStyle: TextStyle(color: Colors.grey)),
-                              validator: (text) {
-                                if (text.isEmpty) {
-                                  return 'Please enter artist name';
-                                }
-                                return null;
-                              },
-                            ),
-                            TextFormField(
-                              focusNode: albumFieldFocusNode,
-                              cursorColor: Colors.green,
-                              style: TextStyle(color: Colors.white),
-                              controller: albumController,
-                              decoration: InputDecoration(
-                                  hintText: 'Album Name',
-                                  hintStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ],
-                        )),
-                  ],
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: <Widget>[
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                        cursorColor: Colors.green,
+                        style: TextStyle(color: Colors.white),
+                        controller: artistController,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (v) {
+                          FocusScope.of(context)
+                              .requestFocus(albumFieldFocusNode);
+                        },
+                        decoration: InputDecoration(
+                            hintText: 'Artist Name',
+                            hintStyle: TextStyle(color: Colors.grey)),
+                        validator: (text) {
+                          if (text.isEmpty) {
+                            return 'Please enter artist name';
+                          }
+                          return null;
+                        },
+                      ),
+                      TextFormField(
+                        focusNode: albumFieldFocusNode,
+                        cursorColor: Colors.green,
+                        style: TextStyle(color: Colors.white),
+                        controller: albumController,
+                        decoration: InputDecoration(
+                            hintText: 'Album Name',
+                            hintStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              if (imageOpts.length > 0)
-                Expanded(
-                    child: AlbumOptions(
-                        albumOptions: imageOpts, onTap: saveRecord))
-            ],
+                if (imageOpts.length > 0)
+                  AlbumOptions(
+                    albumOptions: imageOpts,
+                    onTap: saveRecord,
+                  ),
+              ],
+            ),
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: _performSearch,
@@ -287,14 +285,13 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text('Saved Records'),
           ),
           backgroundColor: appBackgroundColor,
-          body: new ListView(
-            padding: const EdgeInsets.all(16),
-            children: savedRecords
-                .map((album) => AlbumCard(
-                      albumObj: album,
-                      onLongPress: removeRecord,
-                    ))
-                .toList(),
+          body: Column(
+            children: <Widget>[
+              AlbumOptions(
+                albumOptions: savedRecords,
+                onLongPress: removeRecord,
+              )
+            ],
           ),
         ),
       ],
