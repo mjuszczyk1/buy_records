@@ -178,6 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void saveRecord(Album album) {
     Album albumWithId = new Album(
         album.url, album.artist, album.album, album.title, new Uuid().v1());
+
     setState(() {
       savedRecords.add(albumWithId);
     });
@@ -272,7 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
               if (imageOpts.length > 0)
                 Expanded(
                     child: AlbumOptions(
-                        albumOptions: imageOpts, onTapAction: saveRecord))
+                        albumOptions: imageOpts, onTap: saveRecord))
             ],
           ),
           floatingActionButton: FloatingActionButton(
@@ -291,7 +292,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: savedRecords
                 .map((album) => AlbumCard(
                       albumObj: album,
-                      onTapAction: removeRecord,
+                      onLongPress: removeRecord,
                     ))
                 .toList(),
           ),
