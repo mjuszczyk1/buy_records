@@ -35,6 +35,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // Finals - think of these like js `const` (?)
+  final albumFieldFocusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
   final artistController = TextEditingController();
   final albumController = TextEditingController();
@@ -239,6 +240,11 @@ class _MyHomePageState extends State<MyHomePage> {
                               cursorColor: Colors.green,
                               style: TextStyle(color: Colors.white),
                               controller: artistController,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (v) {
+                                FocusScope.of(context)
+                                    .requestFocus(albumFieldFocusNode);
+                              },
                               decoration: InputDecoration(
                                   hintText: 'Artist Name',
                                   hintStyle: TextStyle(color: Colors.grey)),
@@ -250,6 +256,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               },
                             ),
                             TextFormField(
+                              focusNode: albumFieldFocusNode,
                               cursorColor: Colors.green,
                               style: TextStyle(color: Colors.white),
                               controller: albumController,
