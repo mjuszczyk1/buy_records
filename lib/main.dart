@@ -209,7 +209,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<Album> newImageOpts = <Album>[];
     var i = 0;
-    while (i < 10 || i > list["results"].length) {
+    while (i < list["results"].length) {
       newImageOpts.add(Album(
         list["results"][i]["thumb"].isNotEmpty
             ? list["results"][i]["thumb"]
