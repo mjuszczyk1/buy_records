@@ -105,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
       var decodedRecords = decodedRecordsObject['savedRecords'];
 
       decodedRecords.forEach((record) => {
-            retypedRecords.add(new Album(record['url'], record['artist'],
+            retypedRecords.add(Album(record['url'], record['artist'],
                 record['album'], record['title'], record['uuid']))
           });
     }
@@ -135,8 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (savedJsonContentsString.length == 0) {
         jsonFileContent = {
           'savedRecords': [
-            new Album(
-                album.url, album.artist, album.album, album.title, album.uuid)
+            Album(album.url, album.artist, album.album, album.title, album.uuid)
           ]
         };
       } else {
@@ -175,8 +174,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void saveRecord(Album album) {
-    Album albumWithId = new Album(
-        album.url, album.artist, album.album, album.title, new Uuid().v1());
+    Album albumWithId = Album(
+      album.url,
+      album.artist,
+      album.album,
+      album.title,
+      new Uuid().v1(),
+    );
 
     setState(() {
       savedRecords.add(albumWithId);
@@ -192,22 +196,28 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
-  void _performSearch() async {
-    if (artistController.text.length == 0) {
+  void _performSearch(String query) async {
+    if (!_formKey.currentState.validate()) {
       return;
     }
-    String baseUrl = "https://api.discogs.com";
-    String query =
-        Uri.encodeFull("${artistController.text} - ${albumController.text}");
-    String url = "$baseUrl/database/search?type=release&q=$query&token=$apiKey";
+    final String baseUrl = "https://api.discogs.com";
+    final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
+    final String url =
+        "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
     final response = await http.get(url, headers: {"Accept": "text/plain"});
     var list = json.decode(response.body);
 
     List<Album> newImageOpts = <Album>[];
     var i = 0;
-    while (i < 10 || i > list["results"].length - 1) {
-      newImageOpts.add(Album(list["results"][i]["thumb"], artistController.text,
-          albumController.text, list["results"][i]["title"]));
+    while (i < 10 || i > list["results"].length) {
+      newImageOpts.add(Album(
+        list["results"][i]["thumb"].isNotEmpty
+            ? list["results"][i]["thumb"]
+            : 'http://placehold.it/150x150',
+        artistController.text,
+        albumController.text,
+        list["results"][i]["title"],
+      ));
       i++;
     }
 
@@ -220,14 +230,14 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: new Scaffold(
+      child: Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
         ),
         backgroundColor: Colors.black,
         body: TabBarView(
           children: <Widget>[
-            new Scaffold(
+            Scaffold(
               backgroundColor: appBackgroundColor,
               body: Column(
                 children: <Widget>[
@@ -250,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             decoration: InputDecoration(
                                 hintText: 'Artist Name',
                                 hintStyle: TextStyle(color: Colors.grey)),
-                            validator: (text) {
+                            validator: (String text) {
                               if (text.isEmpty) {
                                 return 'Please enter artist name';
                               }
@@ -258,6 +268,11 @@ class _MyHomePageState extends State<MyHomePage> {
                             },
                           ),
                           TextFormField(
+                            onFieldSubmitted: (String album) {
+                              String query = artistController.text;
+                              query += album.isNotEmpty ? " - $album" : '';
+                              _performSearch(Uri.encodeFull(query));
+                            },
                             focusNode: albumFieldFocusNode,
                             cursorColor: Colors.green,
                             style: TextStyle(color: Colors.white),
@@ -278,16 +293,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
               floatingActionButton: FloatingActionButton(
-                onPressed: _performSearch,
+                onPressed: () {
+                  String query = artistController.text;
+                  query += albumController.text.isNotEmpty
+                      ? " - $albumController.text"
+                      : '';
+                  _performSearch(Uri.encodeFull(query));
+                },
                 tooltip: 'Search for albums',
                 child: Icon(Icons.search),
               ),
             ),
-            new Scaffold(
+            Scaffold(
               backgroundColor: appBackgroundColor,
               body: Column(
                 children: <Widget>[
-                  new AlbumOptions(
+                  AlbumOptions(
                     albumOptions: savedRecords,
                     onLongPress: removeRecord,
                   ),
@@ -296,13 +317,13 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        bottomNavigationBar: new TabBar(
+        bottomNavigationBar: TabBar(
             tabs: <Widget>[
               Tab(
-                icon: new Icon(Icons.graphic_eq),
+                icon: Icon(Icons.graphic_eq),
               ),
               Tab(
-                icon: new Icon(Icons.album),
+                icon: Icon(Icons.album),
               ),
             ],
             labelColor: Colors.green,
