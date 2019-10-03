@@ -218,82 +218,98 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: pageController,
-      children: <Widget>[
-        Scaffold(
-          appBar: AppBar(
-            title: Text(widget.title),
-          ),
-          backgroundColor: appBackgroundColor,
-          body: Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                        cursorColor: Colors.green,
-                        style: TextStyle(color: Colors.white),
-                        controller: artistController,
-                        textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (v) {
-                          FocusScope.of(context)
-                              .requestFocus(albumFieldFocusNode);
-                        },
-                        decoration: InputDecoration(
-                            hintText: 'Artist Name',
-                            hintStyle: TextStyle(color: Colors.grey)),
-                        validator: (text) {
-                          if (text.isEmpty) {
-                            return 'Please enter artist name';
-                          }
-                          return null;
-                        },
+    return DefaultTabController(
+      length: 2,
+      child: new Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        backgroundColor: Colors.black,
+        body: TabBarView(
+          children: <Widget>[
+            new Scaffold(
+              backgroundColor: appBackgroundColor,
+              body: Column(
+                children: <Widget>[
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(top: 16, left: 16, right: 16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: <Widget>[
+                          TextFormField(
+                            cursorColor: Colors.green,
+                            style: TextStyle(color: Colors.white),
+                            controller: artistController,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (v) {
+                              FocusScope.of(context)
+                                  .requestFocus(albumFieldFocusNode);
+                            },
+                            decoration: InputDecoration(
+                                hintText: 'Artist Name',
+                                hintStyle: TextStyle(color: Colors.grey)),
+                            validator: (text) {
+                              if (text.isEmpty) {
+                                return 'Please enter artist name';
+                              }
+                              return null;
+                            },
+                          ),
+                          TextFormField(
+                            focusNode: albumFieldFocusNode,
+                            cursorColor: Colors.green,
+                            style: TextStyle(color: Colors.white),
+                            controller: albumController,
+                            decoration: InputDecoration(
+                                hintText: 'Album Name',
+                                hintStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ],
                       ),
-                      TextFormField(
-                        focusNode: albumFieldFocusNode,
-                        cursorColor: Colors.green,
-                        style: TextStyle(color: Colors.white),
-                        controller: albumController,
-                        decoration: InputDecoration(
-                            hintText: 'Album Name',
-                            hintStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  if (imageOpts.length > 0)
+                    AlbumOptions(
+                      albumOptions: imageOpts,
+                      onTap: saveRecord,
+                    ),
+                ],
               ),
-              if (imageOpts.length > 0)
-                AlbumOptions(
-                  albumOptions: imageOpts,
-                  onTap: saveRecord,
-                ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: _performSearch,
-            tooltip: 'Search for albums',
-            child: Icon(Icons.search),
-          ),
+              floatingActionButton: FloatingActionButton(
+                onPressed: _performSearch,
+                tooltip: 'Search for albums',
+                child: Icon(Icons.search),
+              ),
+            ),
+            new Scaffold(
+              backgroundColor: appBackgroundColor,
+              body: Column(
+                children: <Widget>[
+                  new AlbumOptions(
+                    albumOptions: savedRecords,
+                    onLongPress: removeRecord,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        Scaffold(
-          appBar: AppBar(
-            title: Text('Saved Records'),
-          ),
-          backgroundColor: appBackgroundColor,
-          body: Column(
-            children: <Widget>[
-              AlbumOptions(
-                albumOptions: savedRecords,
-                onLongPress: removeRecord,
-              )
+        bottomNavigationBar: new TabBar(
+            tabs: <Widget>[
+              Tab(
+                icon: new Icon(Icons.graphic_eq),
+              ),
+              Tab(
+                icon: new Icon(Icons.album),
+              ),
             ],
-          ),
-        ),
-      ],
+            labelColor: Colors.green,
+            unselectedLabelColor: Colors.white,
+            indicatorSize: TabBarIndicatorSize.label,
+            indicatorColor: Colors.green),
+      ),
     );
   }
 }
