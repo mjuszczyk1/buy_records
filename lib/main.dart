@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:spotify/spotify_io.dart';
 
 void main() => runApp(MyApp());
 
@@ -39,12 +40,11 @@ class _MyHomePageState extends State<MyHomePage> {
   final artistController = TextEditingController();
   final albumController = TextEditingController();
   final appBackgroundColor = Color.fromRGBO(25, 20, 20, 1);
-  String apiKey = '';
   final pageController = PageController(initialPage: 0, keepPage: false);
 
   // Shit that's actually maniuplated for display
-  List<Album> imageOpts = <Album>[];
-  List<Album> savedRecords = <Album>[];
+  List<DiscogsAlbum> imageOpts = <DiscogsAlbum>[];
+  List<DiscogsAlbum> savedRecords = <DiscogsAlbum>[];
 
   // Shit regarding saving data locally
   // saved in a `.json` file and en/de-coded for use
@@ -54,6 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool fileExists = false;
   var fileContents;
 
+  // Shhhh
+  String apiKey = '';
+  String spotifyClientId = '';
+  String spotifyClientSecret = '';
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
     SecretLoader(secretPath: "secrets.json").load().then((Secret x) {
       setState(() {
         apiKey = x.apiKey;
+        spotifyClientId = x.spotifyClientId;
+        spotifyClientSecret = x.spotifyClientSecret;
       });
       return;
     });
@@ -75,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return;
         }
 
-        List<Album> retypedRecords = getSavedRecordsFromJson();
+        List<DiscogsAlbum> retypedRecords = getSavedRecordsFromJson();
 
         this.setState(() {
           fileContents = json.decode(jsonFileString);
@@ -85,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  List<Album> getSavedRecordsFromJson() {
+  List<DiscogsAlbum> getSavedRecordsFromJson() {
     /**
      * Language is reallly weird.. First, encoding when using magic key
      * ie, `json.encode({[savedRecordsKey]: [album]})`
@@ -99,13 +106,13 @@ class _MyHomePageState extends State<MyHomePage> {
     // If you plan on pushing, you need it initialize it with an empty array
     // for some reason... what's the point of typing if I have to initialize it anyway
     // (this pattern is repeated elsewhere as well.)
-    List<Album> retypedRecords = <Album>[];
+    List<DiscogsAlbum> retypedRecords = <DiscogsAlbum>[];
 
     if (decodedRecordsObject.containsKey('savedRecords')) {
       var decodedRecords = decodedRecordsObject['savedRecords'];
 
       decodedRecords.forEach((record) => {
-            retypedRecords.add(Album(record['url'], record['artist'],
+            retypedRecords.add(DiscogsAlbum(record['url'], record['artist'],
                 record['album'], record['title'], record['uuid']))
           });
     }
@@ -113,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return retypedRecords;
   }
 
-  void createFile(Album album, Directory dir, String fileName) {
+  void createFile(DiscogsAlbum album, Directory dir, String fileName) {
     File file = new File(dir.path + '/' + fileName);
     file.createSync();
     var fileContentsString = json.encode({
@@ -127,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  void writeToFile(Album album) {
+  void writeToFile(DiscogsAlbum album) {
     if (fileExists) {
       var savedJsonContentsString = jsonFile.readAsStringSync();
       var jsonFileContent;
@@ -135,7 +142,8 @@ class _MyHomePageState extends State<MyHomePage> {
       if (savedJsonContentsString.length == 0) {
         jsonFileContent = {
           'savedRecords': [
-            Album(album.url, album.artist, album.album, album.title, album.uuid)
+            DiscogsAlbum(
+                album.url, album.artist, album.album, album.title, album.uuid)
           ]
         };
       } else {
@@ -151,12 +159,12 @@ class _MyHomePageState extends State<MyHomePage> {
         () => {fileContents = json.decode(jsonFile.readAsStringSync())});
   }
 
-  void removeRecord(Album album) {
+  void removeRecord(DiscogsAlbum album) {
     if (!fileExists) {
       return;
     }
 
-    List<Album> recordListFromJson = getSavedRecordsFromJson();
+    List<DiscogsAlbum> recordListFromJson = getSavedRecordsFromJson();
     recordListFromJson.removeWhere((a) => a.uuid == album.uuid);
     var jsonString = json.encode({'savedRecords': recordListFromJson});
     jsonFile.writeAsStringSync(jsonString);
@@ -173,8 +181,8 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
-  void saveRecord(Album album) {
-    Album albumWithId = Album(
+  void saveRecord(DiscogsAlbum album) {
+    DiscogsAlbum albumWithId = DiscogsAlbum(
       album.url,
       album.artist,
       album.album,
@@ -200,30 +208,109 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_formKey.currentState.validate()) {
       return;
     }
-    final String baseUrl = "https://api.discogs.com";
-    final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
-    final String url =
-        "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
-    final response = await http.get(url, headers: {"Accept": "text/plain"});
-    var list = json.decode(response.body);
 
-    List<Album> newImageOpts = <Album>[];
-    var i = 0;
-    while (i < list["results"].length) {
-      newImageOpts.add(Album(
-        list["results"][i]["thumb"].isNotEmpty
-            ? list["results"][i]["thumb"]
-            : 'http://placehold.it/150x150',
-        artistController.text,
-        albumController.text,
-        list["results"][i]["title"],
-      ));
-      i++;
-    }
+    var credentials =
+        new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
+    var spotify = new SpotifyApi(credentials);
+    var album = await spotify.albums.get('2Hog1V8mdTWKhCYqI5paph');
+    print(album.name);
+    // var artists = await spotify.artists.list(['0OdUWJ0sBjDrqHygGUXeCF']);
+    // artists.forEach((x) => print(x.name));
+    // var search = await spotify.search.get("metallica").first(2);
+    // if (search == null) {
+    //   return;
+    // }
+    // search.forEach((pages) {
+    //   pages.items.forEach((item) {
+    //     if (item is PlaylistSimple) {
+    //       print('Playlist: \n'
+    //           'id: ${item.id}\n'
+    //           'name: ${item.name}:\n'
+    //           'collaborative: ${item.collaborative}\n'
+    //           'href: ${item.href}\n'
+    //           'trackslink: ${item.tracksLink.href}\n'
+    //           'owner: ${item.owner}\n'
+    //           'public: ${item.owner}\n'
+    //           'snapshotId: ${item.snapshotId}\n'
+    //           'type: ${item.type}\n'
+    //           'uri: ${item.uri}\n'
+    //           'images: ${item.images.length}\n'
+    //           '-------------------------------');
+    //     }
+    //     if (item is Artist) {
+    //       print('Artist: \n'
+    //           'id: ${item.id}\n'
+    //           'name: ${item.name}\n'
+    //           'href: ${item.href}\n'
+    //           'type: ${item.type}\n'
+    //           'uri: ${item.uri}\n'
+    //           '-------------------------------');
+    //     }
+    //     if (item is TrackSimple) {
+    //       print('Track:\n'
+    //           'id: ${item.id}\n'
+    //           'name: ${item.name}\n'
+    //           'href: ${item.href}\n'
+    //           'type: ${item.type}\n'
+    //           'uri: ${item.uri}\n'
+    //           'isPlayable: ${item.isPlayable}\n'
+    //           'artists: ${item.artists.length}\n'
+    //           'availableMarkets: ${item.availableMarkets.length}\n'
+    //           'discNumber: ${item.discNumber}\n'
+    //           'trackNumber: ${item.trackNumber}\n'
+    //           'explicit: ${item.explicit}\n'
+    //           '-------------------------------');
+    //     }
+    //     if (item is AlbumSimple) {
+    //       print('Album:\n'
+    //           'id: ${item.id}\n'
+    //           'name: ${item.name}\n'
+    //           'href: ${item.href}\n'
+    //           'type: ${item.type}\n'
+    //           'uri: ${item.uri}\n'
+    //           'albumType: ${item.albumType}\n'
+    //           'artists: ${item.artists.length}\n'
+    //           'availableMarkets: ${item.availableMarkets.length}\n'
+    //           'images: ${item.images.length}\n'
+    //           '-------------------------------');
+    //     }
+    //   });
+    // });
 
-    setState(() {
-      imageOpts = newImageOpts;
-    });
+    // artistPages.first().then((List<Page<Object>> test) {
+    //   if (test.length > 0) {
+    //     print('yo');
+    //   }
+    // });
+
+    // spotify.artists.get('0OdUWJ0sBjDrqHygGUXeCF').then((Artist x) {
+    //   print(x);
+    // });
+
+    // final String baseUrl = "https://api.discogs.com";
+    // final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
+    // final String url =
+    //     "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
+    // final response = await http.get(url, headers: {"Accept": "text/plain"});
+    // var list = json.decode(response.body);
+
+    // List<DiscogsAlbum> newImageOpts = <DiscogsAlbum>[];
+    // var i = 0;
+    // while (i < list["results"].length) {
+    //   newImageOpts.add(DiscogsAlbum(
+    //     list["results"][i]["thumb"].isNotEmpty
+    //         ? list["results"][i]["thumb"]
+    //         : 'http://placehold.it/150x150',
+    //     artistController.text,
+    //     albumController.text,
+    //     list["results"][i]["title"],
+    //   ));
+    //   i++;
+    // }
+
+    // setState(() {
+    //   imageOpts = newImageOpts;
+    // });
   }
 
   @override

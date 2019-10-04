@@ -1,13 +1,13 @@
-class Album {
+class DiscogsAlbum {
   String url;
   String artist;
   String album;
   String title;
   dynamic uuid;
 
-  Album(this.url, this.artist, this.album, this.title, [this.uuid]);
+  DiscogsAlbum(this.url, this.artist, this.album, this.title, [this.uuid]);
 
-  Album.fromJson(Map<String, dynamic> json)
+  DiscogsAlbum.fromJson(Map<String, dynamic> json)
       : url = json['url'],
         artist = json['artist'],
         album = json['album'],

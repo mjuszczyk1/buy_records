@@ -6,9 +6,9 @@ class AlbumOptions extends StatefulWidget {
   AlbumOptions(
       {Key key, @required this.albumOptions, this.onTap, this.onLongPress})
       : super(key: key);
-  final List<Album> albumOptions;
-  final void Function(Album album) onTap;
-  final void Function(Album album) onLongPress;
+  final List<DiscogsAlbum> albumOptions;
+  final void Function(DiscogsAlbum album) onTap;
+  final void Function(DiscogsAlbum album) onLongPress;
 
   @override
   _AlbumOptionsState createState() => new _AlbumOptionsState();
@@ -20,7 +20,7 @@ class _AlbumOptionsState extends State<AlbumOptions> {
       child: ListView(
         padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
         children: widget.albumOptions
-            .map((Album album) => AlbumCard(
+            .map((DiscogsAlbum album) => AlbumCard(
                   albumObj: album,
                   onTap: widget.onTap,
                   onLongPress: widget.onLongPress,
