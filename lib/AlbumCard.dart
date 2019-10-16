@@ -41,7 +41,7 @@ class _AlbumCardState extends State<AlbumCard> {
                     ),
                   ),
                   textAlign: TextAlign.center,
-                )
+                ),
               ],
             )));
   }

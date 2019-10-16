@@ -11,7 +11,7 @@ class Secret {
     return new Secret(
       apiKey: jsonMap["apiKey"],
       spotifyClientId: jsonMap["spotifyClientId"],
-      spotifyClientSecret: jsonMap["apiKey"],
+      spotifyClientSecret: jsonMap["spotifyClientSecret"],
     );
   }
 }

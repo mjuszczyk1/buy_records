@@ -112,8 +112,13 @@ class _MyHomePageState extends State<MyHomePage> {
       var decodedRecords = decodedRecordsObject['savedRecords'];
 
       decodedRecords.forEach((record) => {
-            retypedRecords.add(DiscogsAlbum(record['url'], record['artist'],
-                record['album'], record['title'], record['uuid']))
+            retypedRecords.add(DiscogsAlbum(
+              url: record['url'],
+              artist: record['artist'],
+              album: record['album'],
+              title: record['title'],
+              uuid: record['uuid'],
+            ))
           });
     }
 
@@ -143,7 +148,13 @@ class _MyHomePageState extends State<MyHomePage> {
         jsonFileContent = {
           'savedRecords': [
             DiscogsAlbum(
-                album.url, album.artist, album.album, album.title, album.uuid)
+              url: album.url,
+              artist: album.artist,
+              album: album.album,
+              title: album.title,
+              spotifyUrl: album.spotifyUrl,
+              uuid: album.uuid,
+            )
           ]
         };
       } else {
@@ -181,13 +192,34 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
-  void saveRecord(DiscogsAlbum album) {
+  void saveRecord(DiscogsAlbum album) async {
+    var credentials =
+        new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
+    var spotify = new SpotifyApi(credentials);
+    List<Page<Object>> search =
+        await spotify.search.get(Uri.encodeFull(album.title)).first(10);
+    List<AlbumSimple> sAlbums = <AlbumSimple>[];
+    search.forEach((Page<Object> page) {
+      page.items.forEach((Object item) {
+        if (item is AlbumSimple) {
+          sAlbums.add(item);
+        }
+      });
+    });
+
+    print(sAlbums.length > 0 && sAlbums.first.externalUrls != null
+        ? sAlbums.first.externalUrls.spotify
+        : '');
+
     DiscogsAlbum albumWithId = DiscogsAlbum(
-      album.url,
-      album.artist,
-      album.album,
-      album.title,
-      new Uuid().v1(),
+      url: album.url,
+      artist: album.artist,
+      album: album.album,
+      title: album.title,
+      spotifyUrl: sAlbums.length > 0 && sAlbums.first.externalUrls != null
+          ? sAlbums.first.externalUrls.spotify
+          : '',
+      uuid: new Uuid().v1(),
     );
 
     setState(() {
@@ -209,108 +241,30 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    var credentials =
-        new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
-    var spotify = new SpotifyApi(credentials);
-    var album = await spotify.albums.get('2Hog1V8mdTWKhCYqI5paph');
-    print(album.name);
-    // var artists = await spotify.artists.list(['0OdUWJ0sBjDrqHygGUXeCF']);
-    // artists.forEach((x) => print(x.name));
-    // var search = await spotify.search.get("metallica").first(2);
-    // if (search == null) {
-    //   return;
-    // }
-    // search.forEach((pages) {
-    //   pages.items.forEach((item) {
-    //     if (item is PlaylistSimple) {
-    //       print('Playlist: \n'
-    //           'id: ${item.id}\n'
-    //           'name: ${item.name}:\n'
-    //           'collaborative: ${item.collaborative}\n'
-    //           'href: ${item.href}\n'
-    //           'trackslink: ${item.tracksLink.href}\n'
-    //           'owner: ${item.owner}\n'
-    //           'public: ${item.owner}\n'
-    //           'snapshotId: ${item.snapshotId}\n'
-    //           'type: ${item.type}\n'
-    //           'uri: ${item.uri}\n'
-    //           'images: ${item.images.length}\n'
-    //           '-------------------------------');
-    //     }
-    //     if (item is Artist) {
-    //       print('Artist: \n'
-    //           'id: ${item.id}\n'
-    //           'name: ${item.name}\n'
-    //           'href: ${item.href}\n'
-    //           'type: ${item.type}\n'
-    //           'uri: ${item.uri}\n'
-    //           '-------------------------------');
-    //     }
-    //     if (item is TrackSimple) {
-    //       print('Track:\n'
-    //           'id: ${item.id}\n'
-    //           'name: ${item.name}\n'
-    //           'href: ${item.href}\n'
-    //           'type: ${item.type}\n'
-    //           'uri: ${item.uri}\n'
-    //           'isPlayable: ${item.isPlayable}\n'
-    //           'artists: ${item.artists.length}\n'
-    //           'availableMarkets: ${item.availableMarkets.length}\n'
-    //           'discNumber: ${item.discNumber}\n'
-    //           'trackNumber: ${item.trackNumber}\n'
-    //           'explicit: ${item.explicit}\n'
-    //           '-------------------------------');
-    //     }
-    //     if (item is AlbumSimple) {
-    //       print('Album:\n'
-    //           'id: ${item.id}\n'
-    //           'name: ${item.name}\n'
-    //           'href: ${item.href}\n'
-    //           'type: ${item.type}\n'
-    //           'uri: ${item.uri}\n'
-    //           'albumType: ${item.albumType}\n'
-    //           'artists: ${item.artists.length}\n'
-    //           'availableMarkets: ${item.availableMarkets.length}\n'
-    //           'images: ${item.images.length}\n'
-    //           '-------------------------------');
-    //     }
-    //   });
-    // });
+    final String baseUrl = "https://api.discogs.com";
+    final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
+    final String url =
+        "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
+    final response = await http.get(url, headers: {"Accept": "text/plain"});
+    var list = json.decode(response.body);
 
-    // artistPages.first().then((List<Page<Object>> test) {
-    //   if (test.length > 0) {
-    //     print('yo');
-    //   }
-    // });
+    List<DiscogsAlbum> newImageOpts = <DiscogsAlbum>[];
+    var i = 0;
+    while (i < list["results"].length) {
+      newImageOpts.add(DiscogsAlbum(
+        url: list["results"][i]["thumb"].isNotEmpty
+            ? list["results"][i]["thumb"]
+            : 'http://placehold.it/150x150',
+        artist: artistController.text,
+        album: albumController.text,
+        title: list["results"][i]["title"],
+      ));
+      i++;
+    }
 
-    // spotify.artists.get('0OdUWJ0sBjDrqHygGUXeCF').then((Artist x) {
-    //   print(x);
-    // });
-
-    // final String baseUrl = "https://api.discogs.com";
-    // final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
-    // final String url =
-    //     "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
-    // final response = await http.get(url, headers: {"Accept": "text/plain"});
-    // var list = json.decode(response.body);
-
-    // List<DiscogsAlbum> newImageOpts = <DiscogsAlbum>[];
-    // var i = 0;
-    // while (i < list["results"].length) {
-    //   newImageOpts.add(DiscogsAlbum(
-    //     list["results"][i]["thumb"].isNotEmpty
-    //         ? list["results"][i]["thumb"]
-    //         : 'http://placehold.it/150x150',
-    //     artistController.text,
-    //     albumController.text,
-    //     list["results"][i]["title"],
-    //   ));
-    //   i++;
-    // }
-
-    // setState(() {
-    //   imageOpts = newImageOpts;
-    // });
+    setState(() {
+      imageOpts = newImageOpts;
+    });
   }
 
   @override
