@@ -116,6 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
               url: record['url'],
               artist: record['artist'],
               album: record['album'],
+              spotifyUrl: record['spotifyUrl'],
               title: record['title'],
               uuid: record['uuid'],
             ))
