@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:spotify/spotify_io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -237,6 +238,21 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
+  void openSpotify(DiscogsAlbum test) async {
+    String url = test.spotifyUrl;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      Fluttertoast.showToast(
+        msg: 'No Spotify URL',
+        fontSize: 24,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
   void _performSearch(String query) async {
     if (!_formKey.currentState.validate()) {
       return;
@@ -357,6 +373,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   AlbumOptions(
                     albumOptions: savedRecords,
                     onLongPress: removeRecord,
+                    onTap: openSpotify,
                   ),
                 ],
               ),
