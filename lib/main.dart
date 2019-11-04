@@ -246,7 +246,11 @@ class _MyHomePageState extends State<MyHomePage> {
     final String url =
         "$baseUrl/database/search?type=$type&q=$query&token=$apiKey";
     final response = await http.get(url, headers: {"Accept": "text/plain"});
-    var list = json.decode(response.body);
+    Map<String, dynamic> list = json.decode(response.body);
+
+    if (!list.containsKey("results")) {
+      return;
+    }
 
     List<DiscogsAlbum> newImageOpts = <DiscogsAlbum>[];
     var i = 0;
@@ -337,7 +341,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () {
                   String query = artistController.text;
                   query += albumController.text.isNotEmpty
-                      ? " - $albumController.text"
+                      ? ' - ${albumController.text}'
                       : '';
                   _performSearch(Uri.encodeFull(query));
                 },
