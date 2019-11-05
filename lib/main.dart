@@ -357,7 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     AlbumOptions(
                       albumOptions: imageOpts,
                       onTap: saveRecord,
-                      showImages: showImages,
+                      showImages: true,
                     ),
                 ],
               ),
@@ -374,6 +374,17 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             Scaffold(
+              floatingActionButton: Builder(
+                builder: (context) {
+                  return FloatingActionButton(
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                    tooltip: 'Open Settings',
+                    child: Icon(Icons.settings),
+                  );
+                },
+              ),
               body: Column(
                 children: <Widget>[
                   AlbumOptions(
