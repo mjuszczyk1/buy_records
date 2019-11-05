@@ -20,7 +20,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Buy Records! Nerd.',
-      theme: ThemeData(primarySwatch: Colors.green),
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        scaffoldBackgroundColor: Color.fromRGBO(25, 20, 20, 1),
+      ),
       home: MyHomePage(title: 'Buy Records! Nerd.'),
     );
   }
@@ -40,7 +43,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final _formKey = GlobalKey<FormState>();
   final artistController = TextEditingController();
   final albumController = TextEditingController();
-  final appBackgroundColor = Color.fromRGBO(25, 20, 20, 1);
   final pageController = PageController(initialPage: 0, keepPage: false);
 
   // Shit that's actually maniuplated for display
@@ -187,11 +189,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     Fluttertoast.showToast(
-        msg: 'Album Removed!',
-        fontSize: 24,
-        gravity: ToastGravity.CENTER,
-        backgroundColor: Colors.green,
-        textColor: Colors.white);
+      msg: 'Album Removed!',
+      fontSize: 24,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
   }
 
   void saveRecord(DiscogsAlbum album) async {
@@ -231,11 +234,12 @@ class _MyHomePageState extends State<MyHomePage> {
     writeToFile(albumWithId);
 
     Fluttertoast.showToast(
-        msg: 'Album Saved!',
-        fontSize: 24,
-        gravity: ToastGravity.CENTER,
-        backgroundColor: Colors.green,
-        textColor: Colors.white);
+      msg: 'Album Saved!',
+      fontSize: 24,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
   }
 
   void openSpotify(DiscogsAlbum test) async {
@@ -300,7 +304,6 @@ class _MyHomePageState extends State<MyHomePage> {
         body: TabBarView(
           children: <Widget>[
             Scaffold(
-              backgroundColor: appBackgroundColor,
               body: Column(
                 children: <Widget>[
                   Padding(
@@ -367,7 +370,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             Scaffold(
-              backgroundColor: appBackgroundColor,
               body: Column(
                 children: <Widget>[
                   AlbumOptions(
