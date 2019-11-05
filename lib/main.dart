@@ -202,29 +202,31 @@ class _MyHomePageState extends State<MyHomePage> {
     var credentials =
         new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
     var spotify = new SpotifyApi(credentials);
-    List<Page<Object>> search =
+    List<Page<Object>> spotifySearch =
         await spotify.search.get(Uri.encodeFull(album.title)).first(10);
-    List<AlbumSimple> sAlbums = <AlbumSimple>[];
-    search.forEach((Page<Object> page) {
+    List<String> spotifyUrls = <String>[];
+    final bool isAlbum = albumController.text.isNotEmpty;
+
+    spotifySearch.forEach((Page<Object> page) {
       page.items.forEach((Object item) {
-        if (item is AlbumSimple) {
-          sAlbums.add(item);
+        if (isAlbum) {
+          if (item is AlbumSimple) {
+            spotifyUrls.add(item.externalUrls.spotify);
+          }
+        } else {
+          if (item is ArtistSimple) {
+            spotifyUrls.add(item.externalUrls.spotify);
+          }
         }
       });
     });
-
-    print(sAlbums.length > 0 && sAlbums.first.externalUrls != null
-        ? sAlbums.first.externalUrls.spotify
-        : '');
 
     DiscogsAlbum albumWithId = DiscogsAlbum(
       url: album.url,
       artist: album.artist,
       album: album.album,
       title: album.title,
-      spotifyUrl: sAlbums.length > 0 && sAlbums.first.externalUrls != null
-          ? sAlbums.first.externalUrls.spotify
-          : '',
+      spotifyUrl: spotifyUrls.first,
       uuid: new Uuid().v1(),
     );
 
