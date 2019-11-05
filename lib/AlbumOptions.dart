@@ -3,12 +3,17 @@ import 'package:buy_records/types/Album.dart';
 import 'package:flutter/material.dart';
 
 class AlbumOptions extends StatefulWidget {
-  AlbumOptions(
-      {Key key, @required this.albumOptions, this.onTap, this.onLongPress})
-      : super(key: key);
+  AlbumOptions({
+    Key key,
+    @required this.albumOptions,
+    @required this.showImages,
+    this.onTap,
+    this.onLongPress,
+  }) : super(key: key);
   final List<DiscogsAlbum> albumOptions;
   final void Function(DiscogsAlbum album) onTap;
   final void Function(DiscogsAlbum album) onLongPress;
+  final bool showImages;
 
   @override
   _AlbumOptionsState createState() => new _AlbumOptionsState();
@@ -24,6 +29,7 @@ class _AlbumOptionsState extends State<AlbumOptions> {
                   albumObj: album,
                   onTap: widget.onTap,
                   onLongPress: widget.onLongPress,
+                  showImages: widget.showImages,
                 ))
             .toList(),
       ),

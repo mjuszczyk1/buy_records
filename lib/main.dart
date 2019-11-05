@@ -56,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String fileName = 'savedRecords.json';
   bool fileExists = false;
   var fileContents;
+  bool showImages = true;
 
   // Shhhh
   String apiKey = '';
@@ -354,6 +355,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     AlbumOptions(
                       albumOptions: imageOpts,
                       onTap: saveRecord,
+                      showImages: showImages,
                     ),
                 ],
               ),
@@ -376,8 +378,41 @@ class _MyHomePageState extends State<MyHomePage> {
                     albumOptions: savedRecords,
                     onLongPress: removeRecord,
                     onTap: openSpotify,
+                    showImages: showImages,
                   ),
                 ],
+              ),
+              endDrawer: Drawer(
+                child: Container(
+                  color: Colors.black,
+                  child: ListView(
+                    children: <Widget>[
+                      FlatButton.icon(
+                          padding: EdgeInsets.all(16),
+                          onPressed: () {
+                            setState(() {
+                              showImages = !this.showImages;
+                            });
+                          },
+                          color: Color.fromRGBO(119, 104, 174, 1),
+                          icon: Icon(
+                            Icons.image,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                          label: Text.rich(
+                            TextSpan(
+                              text: "${showImages ? 'Hide' : 'Show'} Images",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],

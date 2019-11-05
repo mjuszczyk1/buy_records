@@ -2,12 +2,18 @@ import 'package:buy_records/types/Album.dart';
 import 'package:flutter/material.dart';
 
 class AlbumCard extends StatefulWidget {
-  AlbumCard({Key key, @required this.albumObj, this.onTap, this.onLongPress})
-      : super(key: key);
+  AlbumCard({
+    Key key,
+    @required this.albumObj,
+    @required this.showImages,
+    this.onTap,
+    this.onLongPress,
+  }) : super(key: key);
 
   final DiscogsAlbum albumObj;
   final void Function(DiscogsAlbum album) onTap;
   final void Function(DiscogsAlbum album) onLongPress;
+  final bool showImages;
 
   @override
   _AlbumCardState createState() => new _AlbumCardState();
@@ -30,7 +36,7 @@ class _AlbumCardState extends State<AlbumCard> {
             },
             child: Column(
               children: <Widget>[
-                Image.network(widget.albumObj.url),
+                if (widget.showImages) Image.network(widget.albumObj.url),
                 Text.rich(
                   TextSpan(
                     text: widget.albumObj.title,
