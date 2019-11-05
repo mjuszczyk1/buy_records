@@ -5,9 +5,9 @@ class AlbumCard extends StatefulWidget {
   AlbumCard({Key key, @required this.albumObj, this.onTap, this.onLongPress})
       : super(key: key);
 
-  final Album albumObj;
-  final void Function(Album album) onTap;
-  final void Function(Album album) onLongPress;
+  final DiscogsAlbum albumObj;
+  final void Function(DiscogsAlbum album) onTap;
+  final void Function(DiscogsAlbum album) onLongPress;
 
   @override
   _AlbumCardState createState() => new _AlbumCardState();
@@ -41,7 +41,7 @@ class _AlbumCardState extends State<AlbumCard> {
                     ),
                   ),
                   textAlign: TextAlign.center,
-                )
+                ),
               ],
             )));
   }

@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:spotify/spotify_io.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -39,12 +41,11 @@ class _MyHomePageState extends State<MyHomePage> {
   final artistController = TextEditingController();
   final albumController = TextEditingController();
   final appBackgroundColor = Color.fromRGBO(25, 20, 20, 1);
-  String apiKey = '';
   final pageController = PageController(initialPage: 0, keepPage: false);
 
   // Shit that's actually maniuplated for display
-  List<Album> imageOpts = <Album>[];
-  List<Album> savedRecords = <Album>[];
+  List<DiscogsAlbum> imageOpts = <DiscogsAlbum>[];
+  List<DiscogsAlbum> savedRecords = <DiscogsAlbum>[];
 
   // Shit regarding saving data locally
   // saved in a `.json` file and en/de-coded for use
@@ -54,6 +55,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool fileExists = false;
   var fileContents;
 
+  // Shhhh
+  String apiKey = '';
+  String spotifyClientId = '';
+  String spotifyClientSecret = '';
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +67,8 @@ class _MyHomePageState extends State<MyHomePage> {
     SecretLoader(secretPath: "secrets.json").load().then((Secret x) {
       setState(() {
         apiKey = x.apiKey;
+        spotifyClientId = x.spotifyClientId;
+        spotifyClientSecret = x.spotifyClientSecret;
       });
       return;
     });
@@ -75,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return;
         }
 
-        List<Album> retypedRecords = getSavedRecordsFromJson();
+        List<DiscogsAlbum> retypedRecords = getSavedRecordsFromJson();
 
         this.setState(() {
           fileContents = json.decode(jsonFileString);
@@ -85,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  List<Album> getSavedRecordsFromJson() {
+  List<DiscogsAlbum> getSavedRecordsFromJson() {
     /**
      * Language is reallly weird.. First, encoding when using magic key
      * ie, `json.encode({[savedRecordsKey]: [album]})`
@@ -99,21 +107,27 @@ class _MyHomePageState extends State<MyHomePage> {
     // If you plan on pushing, you need it initialize it with an empty array
     // for some reason... what's the point of typing if I have to initialize it anyway
     // (this pattern is repeated elsewhere as well.)
-    List<Album> retypedRecords = <Album>[];
+    List<DiscogsAlbum> retypedRecords = <DiscogsAlbum>[];
 
     if (decodedRecordsObject.containsKey('savedRecords')) {
       var decodedRecords = decodedRecordsObject['savedRecords'];
 
       decodedRecords.forEach((record) => {
-            retypedRecords.add(Album(record['url'], record['artist'],
-                record['album'], record['title'], record['uuid']))
+            retypedRecords.add(DiscogsAlbum(
+              url: record['url'],
+              artist: record['artist'],
+              album: record['album'],
+              spotifyUrl: record['spotifyUrl'],
+              title: record['title'],
+              uuid: record['uuid'],
+            ))
           });
     }
 
     return retypedRecords;
   }
 
-  void createFile(Album album, Directory dir, String fileName) {
+  void createFile(DiscogsAlbum album, Directory dir, String fileName) {
     File file = new File(dir.path + '/' + fileName);
     file.createSync();
     var fileContentsString = json.encode({
@@ -127,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  void writeToFile(Album album) {
+  void writeToFile(DiscogsAlbum album) {
     if (fileExists) {
       var savedJsonContentsString = jsonFile.readAsStringSync();
       var jsonFileContent;
@@ -135,7 +149,14 @@ class _MyHomePageState extends State<MyHomePage> {
       if (savedJsonContentsString.length == 0) {
         jsonFileContent = {
           'savedRecords': [
-            Album(album.url, album.artist, album.album, album.title, album.uuid)
+            DiscogsAlbum(
+              url: album.url,
+              artist: album.artist,
+              album: album.album,
+              title: album.title,
+              spotifyUrl: album.spotifyUrl,
+              uuid: album.uuid,
+            )
           ]
         };
       } else {
@@ -151,12 +172,12 @@ class _MyHomePageState extends State<MyHomePage> {
         () => {fileContents = json.decode(jsonFile.readAsStringSync())});
   }
 
-  void removeRecord(Album album) {
+  void removeRecord(DiscogsAlbum album) {
     if (!fileExists) {
       return;
     }
 
-    List<Album> recordListFromJson = getSavedRecordsFromJson();
+    List<DiscogsAlbum> recordListFromJson = getSavedRecordsFromJson();
     recordListFromJson.removeWhere((a) => a.uuid == album.uuid);
     var jsonString = json.encode({'savedRecords': recordListFromJson});
     jsonFile.writeAsStringSync(jsonString);
@@ -173,13 +194,34 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
-  void saveRecord(Album album) {
-    Album albumWithId = Album(
-      album.url,
-      album.artist,
-      album.album,
-      album.title,
-      new Uuid().v1(),
+  void saveRecord(DiscogsAlbum album) async {
+    var credentials =
+        new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
+    var spotify = new SpotifyApi(credentials);
+    List<Page<Object>> search =
+        await spotify.search.get(Uri.encodeFull(album.title)).first(10);
+    List<AlbumSimple> sAlbums = <AlbumSimple>[];
+    search.forEach((Page<Object> page) {
+      page.items.forEach((Object item) {
+        if (item is AlbumSimple) {
+          sAlbums.add(item);
+        }
+      });
+    });
+
+    print(sAlbums.length > 0 && sAlbums.first.externalUrls != null
+        ? sAlbums.first.externalUrls.spotify
+        : '');
+
+    DiscogsAlbum albumWithId = DiscogsAlbum(
+      url: album.url,
+      artist: album.artist,
+      album: album.album,
+      title: album.title,
+      spotifyUrl: sAlbums.length > 0 && sAlbums.first.externalUrls != null
+          ? sAlbums.first.externalUrls.spotify
+          : '',
+      uuid: new Uuid().v1(),
     );
 
     setState(() {
@@ -196,10 +238,26 @@ class _MyHomePageState extends State<MyHomePage> {
         textColor: Colors.white);
   }
 
+  void openSpotify(DiscogsAlbum test) async {
+    String url = test.spotifyUrl;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      Fluttertoast.showToast(
+        msg: 'No Spotify URL',
+        fontSize: 24,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
   void _performSearch(String query) async {
     if (!_formKey.currentState.validate()) {
       return;
     }
+
     final String baseUrl = "https://api.discogs.com";
     final String type = albumController.text.isNotEmpty ? 'release' : 'artist';
     final String url =
@@ -211,16 +269,16 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    List<Album> newImageOpts = <Album>[];
+    List<DiscogsAlbum> newImageOpts = <DiscogsAlbum>[];
     var i = 0;
     while (i < list["results"].length) {
-      newImageOpts.add(Album(
-        list["results"][i]["thumb"].isNotEmpty
+      newImageOpts.add(DiscogsAlbum(
+        url: list["results"][i]["thumb"].isNotEmpty
             ? list["results"][i]["thumb"]
             : 'http://placehold.it/150x150',
-        artistController.text,
-        albumController.text,
-        list["results"][i]["title"],
+        artist: artistController.text,
+        album: albumController.text,
+        title: list["results"][i]["title"],
       ));
       i++;
     }
@@ -315,6 +373,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   AlbumOptions(
                     albumOptions: savedRecords,
                     onLongPress: removeRecord,
+                    onTap: openSpotify,
                   ),
                 ],
               ),
