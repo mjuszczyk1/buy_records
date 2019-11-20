@@ -371,6 +371,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ? ' - ${albumController.text}'
                       : '';
                   _performSearch(Uri.encodeFull(query));
+                  FocusScope.of(context).requestFocus(FocusNode());
                 },
                 tooltip: 'Search for albums',
                 child: Icon(Icons.search),
