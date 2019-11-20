@@ -240,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
     writeToFile(albumWithId);
 
     Fluttertoast.showToast(
-      msg: 'Album Saved!',
+      msg: '${isAlbum ? 'Album' : 'Artist'} Saved!',
       fontSize: 24,
       gravity: ToastGravity.CENTER,
       backgroundColor: Colors.green,
@@ -263,7 +263,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _performSearch(String query) async {
+  void performSearch(String query) async {
     if (!_formKey.currentState.validate()) {
       return;
     }
@@ -309,145 +309,156 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.black,
         body: TabBarView(
           children: <Widget>[
-            Scaffold(
-              body: Column(
-                children: <Widget>[
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(top: 16, left: 16, right: 16),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: <Widget>[
-                          TextFormField(
-                            cursorColor: Colors.green,
-                            style: TextStyle(color: Colors.white),
-                            controller: artistController,
-                            textInputAction: TextInputAction.next,
-                            onFieldSubmitted: (v) {
-                              FocusScope.of(context)
-                                  .requestFocus(albumFieldFocusNode);
-                            },
-                            decoration: InputDecoration(
-                                hintText: 'Artist Name',
-                                hintStyle: TextStyle(color: Colors.grey)),
-                            validator: (String text) {
-                              if (text.isEmpty) {
-                                return 'Please enter artist name';
-                              }
-                              return null;
-                            },
-                          ),
-                          TextFormField(
-                            onFieldSubmitted: (String album) {
-                              String query = artistController.text;
-                              query += album.isNotEmpty ? " - $album" : '';
-                              _performSearch(Uri.encodeFull(query));
-                            },
-                            focusNode: albumFieldFocusNode,
-                            cursorColor: Colors.green,
-                            style: TextStyle(color: Colors.white),
-                            controller: albumController,
-                            decoration: InputDecoration(
-                                hintText: 'Album Name',
-                                hintStyle: TextStyle(color: Colors.grey)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (imageOpts.length > 0)
-                    AlbumOptions(
-                      albumOptions: imageOpts,
-                      onTap: saveRecord,
-                      showImages: true,
-                    ),
-                ],
-              ),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () {
-                  String query = artistController.text;
-                  query += albumController.text.isNotEmpty
-                      ? ' - ${albumController.text}'
-                      : '';
-                  _performSearch(Uri.encodeFull(query));
-                  FocusScope.of(context).requestFocus(FocusNode());
-                },
-                tooltip: 'Search for albums',
-                child: Icon(Icons.search),
-              ),
-            ),
-            Scaffold(
-              floatingActionButton: Builder(
-                builder: (context) {
-                  return FloatingActionButton(
-                    onPressed: () {
-                      Scaffold.of(context).openEndDrawer();
-                    },
-                    tooltip: 'Open Settings',
-                    child: Icon(Icons.settings),
-                  );
-                },
-              ),
-              body: Column(
-                children: <Widget>[
-                  AlbumOptions(
-                    albumOptions: savedRecords,
-                    onLongPress: removeRecord,
-                    onTap: openSpotify,
-                    showImages: showImages,
-                  ),
-                ],
-              ),
-              endDrawer: Drawer(
-                child: Container(
-                  color: Colors.black,
-                  child: ListView(
-                    children: <Widget>[
-                      FlatButton.icon(
-                          padding: EdgeInsets.all(16),
-                          onPressed: () {
-                            setState(() {
-                              showImages = !this.showImages;
-                            });
-                          },
-                          color: Color.fromRGBO(119, 104, 174, 1),
-                          icon: Icon(
-                            Icons.image,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                          label: Text.rich(
-                            TextSpan(
-                              text: "${showImages ? 'Hide' : 'Show'} Images",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          )),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            _buildSearchPage(context),
+            _buildSavedPage(context)
           ],
         ),
-        bottomNavigationBar: TabBar(
-            tabs: <Widget>[
-              Tab(
-                icon: Icon(Icons.graphic_eq),
-              ),
-              Tab(
-                icon: Icon(Icons.album),
-              ),
-            ],
-            labelColor: Colors.green,
-            unselectedLabelColor: Colors.white,
-            indicatorSize: TabBarIndicatorSize.label,
-            indicatorColor: Colors.green),
+        bottomNavigationBar: _buildBottomNavigationBar(context),
       ),
+    );
+  }
+
+  Widget _buildSearchPage(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    cursorColor: Colors.green,
+                    style: TextStyle(color: Colors.white),
+                    controller: artistController,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (v) {
+                      FocusScope.of(context).requestFocus(albumFieldFocusNode);
+                    },
+                    decoration: InputDecoration(
+                        hintText: 'Artist Name',
+                        hintStyle: TextStyle(color: Colors.grey)),
+                    validator: (String text) {
+                      if (text.isEmpty) {
+                        return 'Please enter artist name';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    onFieldSubmitted: (String album) {
+                      String query = artistController.text;
+                      query += album.isNotEmpty ? " - $album" : '';
+                      performSearch(Uri.encodeFull(query));
+                    },
+                    focusNode: albumFieldFocusNode,
+                    cursorColor: Colors.green,
+                    style: TextStyle(color: Colors.white),
+                    controller: albumController,
+                    decoration: InputDecoration(
+                        hintText: 'Album Name',
+                        hintStyle: TextStyle(color: Colors.grey)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (imageOpts.length > 0)
+            AlbumOptions(
+              albumOptions: imageOpts,
+              onTap: saveRecord,
+              showImages: true,
+            ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          String query = artistController.text;
+          query += albumController.text.isNotEmpty
+              ? ' - ${albumController.text}'
+              : '';
+          performSearch(Uri.encodeFull(query));
+          FocusScope.of(context).requestFocus(FocusNode());
+        },
+        tooltip: 'Search for albums',
+        child: Icon(Icons.search),
+      ),
+    );
+  }
+
+  Widget _buildSavedPage(BuildContext context) {
+    return Scaffold(
+      floatingActionButton: Builder(
+        builder: (context) {
+          return FloatingActionButton(
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+            tooltip: 'Open Settings',
+            child: Icon(Icons.settings),
+          );
+        },
+      ),
+      body: Column(
+        children: <Widget>[
+          AlbumOptions(
+            albumOptions: savedRecords,
+            onLongPress: removeRecord,
+            onTap: openSpotify,
+            showImages: showImages,
+          ),
+        ],
+      ),
+      endDrawer: Drawer(
+        child: Container(
+          color: Colors.black,
+          child: ListView(
+            children: <Widget>[
+              FlatButton.icon(
+                  padding: EdgeInsets.all(16),
+                  onPressed: () {
+                    setState(() {
+                      showImages = !this.showImages;
+                    });
+                  },
+                  color: Color.fromRGBO(119, 104, 174, 1),
+                  icon: Icon(
+                    Icons.image,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                  label: Text.rich(
+                    TextSpan(
+                      text: "${showImages ? 'Hide' : 'Show'} Images",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return TabBar(
+      tabs: <Widget>[
+        Tab(
+          icon: Icon(Icons.graphic_eq),
+        ),
+        Tab(
+          icon: Icon(Icons.album),
+        ),
+      ],
+      labelColor: Colors.green,
+      unselectedLabelColor: Colors.white,
+      indicatorSize: TabBarIndicatorSize.label,
+      indicatorColor: Colors.green,
     );
   }
 }
