@@ -56,7 +56,10 @@ class _MyHomePageState extends State<MyHomePage> {
   String fileName = 'savedRecords.json';
   bool fileExists = false;
   var fileContents;
+
+  // Display variables.
   bool showImages = true;
+  bool searchPerformed = false;
 
   // Shhhh
   String apiKey = '';
@@ -295,6 +298,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     setState(() {
       imageOpts = newImageOpts;
+      searchPerformed = true;
     });
   }
 
@@ -323,7 +327,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+            padding: const EdgeInsets.all(16),
             child: Form(
               key: _formKey,
               child: Column(
@@ -364,6 +368,16 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
+          if (imageOpts.length == 0)
+            Text.rich(
+              TextSpan(
+                text: searchPerformed ? 'No results' : 'Search for something',
+                style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
           if (imageOpts.length > 0)
             AlbumOptions(
               albumOptions: imageOpts,
