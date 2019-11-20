@@ -202,31 +202,34 @@ class _MyHomePageState extends State<MyHomePage> {
     var credentials =
         new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
     var spotify = new SpotifyApi(credentials);
-    List<Page<Object>> spotifySearch =
+    List<Page<dynamic>> spotifySearch =
         await spotify.search.get(Uri.encodeFull(album.title)).first(10);
     List<String> spotifyUrls = <String>[];
     final bool isAlbum = albumController.text.isNotEmpty;
+    String backupUrl = '';
 
-    spotifySearch.forEach((Page<Object> page) {
-      page.items.forEach((Object item) {
-        if (isAlbum) {
-          if (item is AlbumSimple) {
-            spotifyUrls.add(item.externalUrls.spotify);
-          }
-        } else {
-          if (item is ArtistSimple) {
-            spotifyUrls.add(item.externalUrls.spotify);
-          }
-        }
-      });
-    });
+    if (isAlbum) {
+      spotifySearch[1]
+          .items
+          .forEach((item) => spotifyUrls.add(item.externalUrls.spotify));
+    } else {
+      spotifySearch[2]
+          .items
+          .forEach((item) => spotifyUrls.add(item.externalUrls.spotify));
+    }
+
+    if (spotifyUrls.length == 0) {
+      Page<dynamic> firstResultPage =
+          spotifySearch.firstWhere((page) => page.items.length > 0);
+      backupUrl = firstResultPage.items.first.externalUrls.spotify;
+    }
 
     DiscogsAlbum albumWithId = DiscogsAlbum(
       url: album.url,
       artist: album.artist,
       album: album.album,
       title: album.title,
-      spotifyUrl: spotifyUrls.first,
+      spotifyUrl: spotifyUrls.isNotEmpty ? spotifyUrls.first : backupUrl,
       uuid: new Uuid().v1(),
     );
 
