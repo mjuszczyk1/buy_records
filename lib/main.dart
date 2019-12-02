@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
       title: 'Buy Records! Nerd.',
       theme: ThemeData(
         primarySwatch: Colors.green,
+        canvasColor: Color.fromRGBO(25, 20, 20, 1),
         scaffoldBackgroundColor: Color.fromRGBO(25, 20, 20, 1),
       ),
       home: MyHomePage(title: 'Buy Records! Nerd.'),
@@ -241,6 +242,47 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     writeToFile(albumWithId);
+
+    // Need to move actual writing and stuff into a function that will be called
+    // onClick of something in this ModalBottomSheet.
+    // Need a field to enter genre, and a dropdown element to select genres
+    // that have already been entered.
+    // Consider scenario:
+    // - Search for Bill Evans, click item, modal pops up, type in Jazz, and click save.
+    // - Search for Thad Jones, click item, modal pops up, select Jazz from list, click save.
+    showModalBottomSheet(
+      backgroundColor: Theme.of(context).canvasColor,
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(10.0),
+          topRight: Radius.circular(10.0),
+        ),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              leading: Icon(
+                Icons.ac_unit,
+                color: Colors.white,
+              ),
+              title: Text.rich(
+                TextSpan(text: 'Choice'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
     Fluttertoast.showToast(
       msg: '${isAlbum ? 'Album' : 'Artist'} Saved!',
