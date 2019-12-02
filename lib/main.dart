@@ -66,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String apiKey = '';
   String spotifyClientId = '';
   String spotifyClientSecret = '';
-
+  String dropdownValue = 'One';
   @override
   void initState() {
     super.initState();
@@ -278,6 +278,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+            DropdownButton<String>(
+              value: dropdownValue,
+              icon: Icon(Icons.arrow_downward),
+              iconSize: 24,
+              elevation: 16,
+              style: TextStyle(color: Colors.deepPurple),
+              underline: Container(
+                height: 2,
+                color: Colors.deepPurpleAccent,
+              ),
+              onChanged: (String newValue) {
+                setState(() {
+                  dropdownValue = newValue;
+                });
+              },
+              items: <String>[
+                'One',
+                'Two',
+                'Free',
+                'Four',
+              ].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
             ),
           ],
         );
