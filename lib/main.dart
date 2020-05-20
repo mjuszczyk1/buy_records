@@ -6,10 +6,10 @@ import 'package:buy_records/AlbumOptions.dart';
 import 'package:buy_records/types/Album.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:spotify/spotify.dart' as Spotify;
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:spotify/spotify_io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
@@ -203,9 +203,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void saveRecord(DiscogsAlbum album) async {
     var credentials =
-        new SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
-    var spotify = new SpotifyApi(credentials);
-    List<Page<dynamic>> spotifySearch =
+        new Spotify.SpotifyApiCredentials(spotifyClientId, spotifyClientSecret);
+    var spotify = new Spotify.SpotifyApi(credentials);
+    List<Spotify.Page<dynamic>> spotifySearch =
         await spotify.search.get(Uri.encodeFull(album.title)).first(10);
     List<String> spotifyUrls = <String>[];
     final bool isAlbum = albumController.text.isNotEmpty;
@@ -222,7 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     if (spotifyUrls.length == 0) {
-      Page<dynamic> firstResultPage =
+      Spotify.Page<dynamic> firstResultPage =
           spotifySearch.firstWhere((page) => page.items.length > 0);
       backupUrl = firstResultPage.items.first.externalUrls.spotify;
     }
